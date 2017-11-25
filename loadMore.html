@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>加载更多</title>
+    <style>
+        ul, li {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        .content li {
+            border: 1px solid #ccc;
+            padding: 8px 16px;
+            margin-top: 10px;
+        }
+
+        .hover {
+            background: green;
+        }
+
+        .btn {
+            display: block;
+            border: 1px solid #E27272;
+            color: #E27272;
+            border-radius: 3px;
+            width: 100px;
+            height: 40px;
+            line-height: 40px;
+            margin: 10px auto;
+            text-align: center;
+        }
+
+        .btn img {
+            width: 30px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+<ul class="content">
+    <li>内容1</li>
+    <li>内容2</li>
+</ul>
+<a href="#" class="btn">加载更多</a>
+</body>
+<script src="http://apps.bdimg.com/libs/jquery/1.9.1/jquery.js"></script>
+<script>
+    $('.content li').on('mouseenter', function () {
+        $(this).addClass('hover');
+    });
+    $('.content li').on('mouseleave', function () {
+        $(this).removeClass('hover');
+    });
+
+    var $ct = $('.content');
+    var $loadMore = $('.btn');
+    var cur = 3;
+    $loadMore.on('click', function (e) {
+        var $this = $(this);
+        e.preventDefault();  //防止点击a链接跳转到顶部
+        if ($this.data('isLoading')) {
+            return;
+        }
+        $this.data('isLoading', true)  //设置一个状态锁，防止在加载数据回来之前用户多次点击
+            .html('<img src="loading.gif"/>');
+
+        $.ajax({
+            url: 'http://localhost:8080/loadMore',
+            type: 'get',
+            dataType: 'json',
+            data: {
+                start: cur,
+                len: 6
+            },
+            success: function (json) {
+                setTimeout(function () {
+                    onSuccess(json);
+                }, 1000);
+            },
+            error: function () {
+                onError();
+            }
+        });
+    });
+    function onSuccess(json) {
+        $loadMore.data('isLoading', false).text('加载更多');  //链式调用
+        console.log(json);
+        if (+json.status === 0) {
+            append(json.data);
+            cur += 6;
+        } else {
+            alert('获取数据失败');
+        }
+    }
+    function onError() {
+        $loadMore.data('isLoading', false).text('加载更多');  //链式调用
+        alert('加载异常');
+    }
+    function append(arr) {
+        for (var i = 0; i < arr.length; i++) {
+            $ct.append('<li>' + arr[i] + '</li>')
+        }
+    }
+</script>
+</html>
